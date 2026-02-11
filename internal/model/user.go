@@ -2,6 +2,7 @@ package model
 
 import "time"
 
+// 構造体定義
 type User struct {
 	UserID        int        `json:"user_id"`         //ユーザーID
 	DeviceID      string     `json:"device_id"`       //デバイスID
