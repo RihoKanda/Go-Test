@@ -1,73 +1,61 @@
 package model
 
 import (
-	//"github.com/naoina/goam"
 	"database/sql"
-	"errors"
 )
 
-var ErrUserNotFound = errors.New("user not found")
-
-func FindUserByDeviceID(deviceID string) (*User, error) {
-	row := DB.QueryRow(
-		`SELECT id, device_id, user_name, level, created_at
-		 FROM users
-		WHERE device_id = ?`,
-		deviceID,
-	)
+// DeviceIDからユーザーを取得する
+func FindByDeviceID(deviceID string) (*User, error) {
+	row := DB.QueryRow(`
+		SELECT
+			user_id,
+			device_id,
+			user_name,
+			level,
+			exp,
+			attack_up,
+			speed_up,
+			is_idle,
+			idle_started_at,
+			created_at,
+			updated_at
+		FROM users
+		WHERE device_id = ?
+	`, deviceID)
 
 	var user User
-
 	err := row.Scan(
-		&user.ID,
+		&user.UserID,
 		&user.DeviceID,
 		&user.UserName,
 		&user.Level,
+		&user.Exp,
+		&user.AttackUp,
+		&user.SpeedUp,
+		&user.IsIdle,
+		&user.IdleStartedAt,
 		&user.CreatedAt,
+		&user.UpdatedAt,
 	)
 
-	// err := goam.
-	// 	New(DB).
-	// 	Select("*").
-	// 	From("users").
-	// 	Where("device_id = ?", deviceID).
-	// 	Scan(&user)
-
 	if err == sql.ErrNoRows {
-		return nil, ErrUserNotFound
+		return nil, err
 	}
-
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
+// ユーザーを新規作成する(新規ログイン)
 func CreateUser(deviceID string) (*User, error) {
-	result, err := DB.Exec(
-		`INSERT INTO users (device_id, user_name, level)
-		 VALUES (?, ?, ?)`,
-		deviceID,
-		"NoName",
-		1,
-	)
-	// user := &User{
-	// 	DeviceID: deviceID,
-	// 	UserName: "NoName",
-	// 	Level:    1,
-	// }
-
-	// _, err := goam.
-	// 	New(DB).
-	// 	Insert("users").
-	// 	Columns("device_id", "user_name", "level").
-	// 	Values(user.DeviceID, user.UserName, user.Level).
-	// 	Exec()
-
+	result, err := DB.Exec(`
+		INSERT INTO users (device_id, level, exp)
+		VALUES (?, 1, 0)
+	`, deviceID)
 	if err != nil {
 		return nil, err
 	}
-
 	id, err := result.LastInsertId()
 	if err != nil {
 		return nil, err
@@ -76,29 +64,66 @@ func CreateUser(deviceID string) (*User, error) {
 	return FindUserByID(int(id))
 }
 
-func FindUserByID(id int) (*User, error) {
-	row := DB.QueryRow(
-		`SELECT id, device_id, user_name, level, created_at
-		 FROM users
-		 WHERE id = ?`,
-		id,
-	)
+// user_idからユーザーを取得する(内部)
+func FindUserByID(UserID int) (*User, error) {
+	row := DB.QueryRow(`
+		SELECT
+			user_id,
+			device_id,
+			user_name,
+			level,
+			exp,
+			attack_up,
+			speed_up,
+			is_idle,
+			idle_started_at,
+			created_at,
+			updated_at
+		FROM users
+		WHERE user_id = ?
+	`, UserID)
 
 	var user User
 	err := row.Scan(
-		&user.ID,
+		&user.UserID,
 		&user.DeviceID,
 		&user.UserName,
 		&user.Level,
+		&user.Exp,
+		&user.AttackUp,
+		&user.SpeedUp,
+		&user.IsIdle,
+		&user.IdleStartedAt,
 		&user.CreatedAt,
+		&user.UpdatedAt,
 	)
-
-	if err == sql.ErrNoRows {
-		return nil, ErrUserNotFound
-	}
 	if err != nil {
 		return nil, err
 	}
-
 	return &user, nil
+}
+
+// 放置開始
+func StartIdle(userID int) error {
+	_, err := DB.Exec(`
+		UPDATE users
+		SET
+			is_idle = TRUE,
+			idle_started_at = NOW()
+		WHERE user_id = ?
+	`, userID)
+	return err
+}
+
+// 放置終了+ 報酬反映
+func EndIdle(userID int, gainedExp uint64) error {
+	_, err := DB.Exec(`
+		UPDATE users
+		SET
+			is_idle = FALSE,
+			idle_started_at = NULL,
+			exp = exp + ?
+		WHERE user_id = ?
+	`, gainedExp, userID)
+	return err
 }
