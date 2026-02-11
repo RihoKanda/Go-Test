@@ -1,11 +1,14 @@
 package model
 
+// DB操作関連
 import (
 	"database/sql"
+	//"errors"
+	//"time"
 )
 
 // DeviceIDからユーザーを取得する
-func FindByDeviceID(deviceID string) (*User, error) {
+func FindUserByDeviceID(deviceID string) (*User, error) {
 	row := DB.QueryRow(`
 		SELECT
 			user_id,
@@ -47,7 +50,7 @@ func FindByDeviceID(deviceID string) (*User, error) {
 	return &user, nil
 }
 
-// ユーザーを新規作成する(新規ログイン)
+// ユーザーを作成する(新規ログイン)
 func CreateUser(deviceID string) (*User, error) {
 	result, err := DB.Exec(`
 		INSERT INTO users (device_id, level, exp)
@@ -115,7 +118,7 @@ func StartIdle(userID int) error {
 	return err
 }
 
-// 放置終了+ 報酬反映
+// 放置終了+経験値付与
 func EndIdle(userID int, gainedExp uint64) error {
 	_, err := DB.Exec(`
 		UPDATE users
