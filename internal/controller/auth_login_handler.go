@@ -12,8 +12,9 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	UserID int `json:"user_id"`
-	Level  int `json:"level"`
+	UserID int   `json:"user_id"`
+	Level  int   `json:"level"`
+	Exp    int64 `json:"exp"`
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +41,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	res := LoginResponse{
 		UserID: user.UserID,
 		Level:  user.Level,
+		Exp:    user.Exp,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
