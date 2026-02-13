@@ -32,11 +32,11 @@ func Initialize(config Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
-
+	// 接続プールの設定
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(25)
 	db.SetConnMaxLifetime(5 * time.Minute)
-
+	// 接続確認
 	if err := db.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
@@ -45,6 +45,7 @@ func Initialize(config Config) error {
 	return nil
 }
 
+// Close データベース接続を閉じる
 func Close() error {
 	if DB != nil {
 		return DB.Close()
