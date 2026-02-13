@@ -98,4 +98,24 @@ namespace IdleGame.Models
         public bool leveled_up;
         public int new_level;
     }
+
+    /// <summary>
+    /// 能力強化レスポンス
+    /// </summary>
+    [Serializable]
+    public class UpgradeResponse
+    {
+        public User user;
+        public string upgrade_type;
+    }
+
+    /// <summary>
+    /// 進化レスポンス
+    /// </summary>
+    [Serializable]
+    public class EvolveResponse
+    {
+        public User user;
+        public int evolution_stage;
+    }
 }
